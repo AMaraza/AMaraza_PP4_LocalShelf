@@ -3,6 +3,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
 import 'package:local_shelf/shelf.dart';
 import 'package:local_shelf/browse.dart';
+import 'package:local_shelf/map.dart';
 
 
 void main() async {
@@ -78,7 +79,14 @@ class HomeScreen extends StatelessWidget {
             ),
 
             TextButton(
-              onPressed: () {},
+              onPressed: () {                
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MapView(),
+                  ),
+                );
+              },
               style: TextButton.styleFrom(
                 backgroundColor: Colors.blue,
                 foregroundColor: Colors.white,
