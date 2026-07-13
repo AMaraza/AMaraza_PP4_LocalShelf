@@ -58,7 +58,6 @@ class DefaultFirebaseOptions {
     databaseURL: 'https://local-shelf-98604-default-rtdb.firebaseio.com',
     storageBucket: 'local-shelf-98604.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCmtG44MhUMe1H05cNFIkKZMuX9kvILXWo',
     appId: '1:15152293781:ios:eb224b9d91cac3ad7a389c',
@@ -68,7 +67,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'local-shelf-98604.firebasestorage.app',
     iosBundleId: 'com.example.localShelf',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyCmtG44MhUMe1H05cNFIkKZMuX9kvILXWo',
     appId: '1:15152293781:ios:eb224b9d91cac3ad7a389c',
