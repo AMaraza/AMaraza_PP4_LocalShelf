@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:firebase_database/firebase_database.dart';
+//import 'package:firebase_database/firebase_database.dart';
 
 class BrowseBooksView extends StatefulWidget {
   const BrowseBooksView({super.key});
@@ -37,7 +37,7 @@ Future<void> writeTestBook() async {
 
 class _BrowseBooksViewState extends State<BrowseBooksView> {
   final TextEditingController searchController = TextEditingController();
-  final database = FirebaseDatabase.instance.ref();
+  //final database = FirebaseDatabase.instance.ref();
 
   String? title;
   String? author;

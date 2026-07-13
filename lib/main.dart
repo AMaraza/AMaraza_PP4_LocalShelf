@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
 import 'package:local_shelf/shelf.dart';
 import 'package:local_shelf/browse.dart';
 import 'package:local_shelf/map.dart';
 
 
 void main() async {
-WidgetsFlutterBinding.ensureInitialized();
+/*WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
   options: DefaultFirebaseOptions.currentPlatform,
-);
+);*/
   runApp(const MainApp());
 }
 
