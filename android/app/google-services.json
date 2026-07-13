@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "15152293781",
+    "firebase_url": "https://local-shelf-98604-default-rtdb.firebaseio.com",
+    "project_id": "local-shelf-98604",
+    "storage_bucket": "local-shelf-98604.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:15152293781:android:1beb28add3fbf8de7a389c",
+        "android_client_info": {
+          "package_name": "com.example.local_shelf"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDl0r_RmKSplKpC7kMoODqllH-0jHrrW98"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

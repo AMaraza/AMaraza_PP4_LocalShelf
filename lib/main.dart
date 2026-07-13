@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+
+import 'firebase_options.dart';
+
 import 'package:local_shelf/shelf.dart';
 import 'package:local_shelf/browse.dart';
 import 'package:local_shelf/map.dart';
 
-
-void main() async {
-/*WidgetsFlutterBinding.ensureInitialized();
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
 
   await Firebase.initializeApp(
-  options: DefaultFirebaseOptions.currentPlatform,
-);*/
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const MainApp());
 }
 
@@ -18,8 +22,16 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: HomeScreen(),
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      title: "LocalShelf",
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.blue,
+        ),
+        useMaterial3: true,
+      ),
+      home: const HomeScreen(),
     );
   }
 }
@@ -27,9 +39,18 @@ class MainApp extends StatelessWidget {
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
+  ButtonStyle get buttonStyle => TextButton.styleFrom(
+        backgroundColor: Colors.blue,
+        foregroundColor: Colors.white,
+        fixedSize: const Size(220, 45),
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("LocalShelf"),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -37,59 +58,53 @@ class HomeScreen extends StatelessWidget {
             const Text(
               "LocalShelf",
               style: TextStyle(
-                fontSize: 24,
+                fontSize: 28,
                 fontWeight: FontWeight.bold,
               ),
             ),
 
+            const SizedBox(height: 30),
+
             TextButton(
+              style: buttonStyle,
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ShelfView(),
+                    builder: (_) => const ShelfView(),
                   ),
                 );
               },
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                fixedSize: const Size(200, 25),
-              ),
               child: const Text("View Shelves"),
             ),
 
+            const SizedBox(height: 12),
+
             TextButton(
-              onPressed: () {                
+              style: buttonStyle,
+              onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const BrowseBooksView(),
+                    builder: (_) => const BrowseBooksView(),
                   ),
                 );
               },
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                fixedSize: const Size(200, 25),
-              ),
               child: const Text("Search Books"),
             ),
 
+            const SizedBox(height: 12),
+
             TextButton(
-              onPressed: () {                
+              style: buttonStyle,
+              onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const MapView(),
+                    builder: (_) => const MapView(),
                   ),
                 );
               },
-              style: TextButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                fixedSize: const Size(200, 25),
-              ),
               child: const Text("Find Local Bookstore"),
             ),
           ],
