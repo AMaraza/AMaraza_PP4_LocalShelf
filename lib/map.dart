@@ -21,7 +21,7 @@ class _MapViewState extends State<MapView> {
 
   List<dynamic> places = [];
 
-  final String apiKey = "";
+  final String apiKey = "AIzaSyAmpRhbgGxDVgLCkXE7-m1jeKMXIIKe7mc";
 
 
   Future<Position> determinePosition() async {
