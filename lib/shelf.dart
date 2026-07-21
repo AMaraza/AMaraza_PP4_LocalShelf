@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 
+import 'book.dart';
+import 'storage_service.dart';
+
 class ShelfView extends StatefulWidget {
   const ShelfView({super.key});
 
@@ -17,120 +20,57 @@ class _ShelfViewState extends State<ShelfView> {
   String selectedShelf = "WishList";
   String sortBy = "Custom";
 
-  final List<Map<String, dynamic>> books = [
-    {
-      "id": "1",
-      "title": "Project Hail Mary",
-      "author": "Andy Weir",
-      "coverUrl":
-          "https://covers.openlibrary.org/b/isbn/9780593135204-L.jpg",
-      "shelf": "WishList",
-      "dateAdded": 6,
-      "order": 0,
-    },
-    {
-      "id": "2",
-      "title": "The Hobbit",
-      "author": "J.R.R. Tolkien",
-      "coverUrl":
-          "https://covers.openlibrary.org/b/isbn/9780547928227-L.jpg",
-      "shelf": "WishList",
-      "dateAdded": 3,
-      "order": 1,
-    },
-    {
-      "id": "3",
-      "title": "The Hunger Games",
-      "author": "Suzanne Collins",
-      "coverUrl":
-          "https://covers.openlibrary.org/b/isbn/9780439023481-L.jpg",
-      "shelf": "WishList",
-      "dateAdded": 5,
-      "order": 2,
-    },
-    {
-      "id": "4",
-      "title": "Dune",
-      "author": "Frank Herbert",
-      "coverUrl":
-          "https://covers.openlibrary.org/b/isbn/9780441172719-L.jpg",
-      "shelf": "To Be Read",
-      "dateAdded": 4,
-      "order": 0,
-    },
-    {
-      "id": "5",
-      "title": "1984",
-      "author": "George Orwell",
-      "coverUrl":
-          "https://covers.openlibrary.org/b/isbn/9780451524935-L.jpg",
-      "shelf": "To Be Read",
-      "dateAdded": 2,
-      "order": 1,
-    },
-    {
-      "id": "6",
-      "title": "The Martian",
-      "author": "Andy Weir",
-      "coverUrl":
-          "https://covers.openlibrary.org/b/isbn/9780553418026-L.jpg",
-      "shelf": "Finished",
-      "dateAdded": 1,
-      "order": 0,
-    },
-  ];
+  List<Book> books = [];
+  bool isLoading = true;
 
-  List<Map<String, dynamic>> get currentShelfBooks {
+  @override
+  void initState() {
+    super.initState();
+    loadBooks();
+  }
+
+  Future<void> loadBooks() async {
+    final savedBooks = await StorageService.loadBooks();
+
+    setState(() {
+      books = savedBooks;
+      isLoading = false;
+    });
+  }
+
+  Future<void> saveBooks() async {
+    await StorageService.saveBooks(books);
+  }
+
+  List<Book> get currentShelfBooks {
     final shelfBooks = books
-        .where((book) => book["shelf"] == selectedShelf)
+        .where((book) => book.shelf == selectedShelf)
         .toList();
 
     if (sortBy == "Title") {
-      shelfBooks.sort((firstBook, secondBook) {
-        final firstTitle = firstBook["title"]
-            .toString()
-            .toLowerCase();
-
-        final secondTitle = secondBook["title"]
-            .toString()
-            .toLowerCase();
-
-        return firstTitle.compareTo(secondTitle);
+      shelfBooks.sort((a, b) {
+        return a.title.toLowerCase().compareTo(
+              b.title.toLowerCase(),
+            );
       });
     } else if (sortBy == "Author") {
-      shelfBooks.sort((firstBook, secondBook) {
-        final firstAuthor = firstBook["author"]
-            .toString()
-            .toLowerCase();
-
-        final secondAuthor = secondBook["author"]
-            .toString()
-            .toLowerCase();
-
-        return firstAuthor.compareTo(secondAuthor);
+      shelfBooks.sort((a, b) {
+        return a.author.toLowerCase().compareTo(
+              b.author.toLowerCase(),
+            );
       });
     } else if (sortBy == "Date Added") {
-      shelfBooks.sort((firstBook, secondBook) {
-        final firstDate = firstBook["dateAdded"] as int;
-        final secondDate = secondBook["dateAdded"] as int;
-
-        return secondDate.compareTo(firstDate);
-      });
-    } else {
-      shelfBooks.sort((firstBook, secondBook) {
-        final firstOrder = firstBook["order"] as int;
-        final secondOrder = secondBook["order"] as int;
-
-        return firstOrder.compareTo(secondOrder);
+      shelfBooks.sort((a, b) {
+        return b.dateAdded.compareTo(a.dateAdded);
       });
     }
 
     return shelfBooks;
   }
 
-  Map<String, dynamic>? findBook(String bookId) {
+  Book? findBook(String id) {
     for (final book in books) {
-      if (book["id"] == bookId) {
+      if (book.id == id) {
         return book;
       }
     }
@@ -138,56 +78,51 @@ class _ShelfViewState extends State<ShelfView> {
     return null;
   }
 
-  void deleteBook(String bookId) {
+  Future<void> deleteBook(String id) async {
     setState(() {
-      books.removeWhere((book) => book["id"] == bookId);
-      refreshShelfOrder(selectedShelf);
+      books.removeWhere(
+        (book) => book.id == id,
+      );
     });
+
+    await saveBooks();
   }
 
-  void moveBookToShelf(String bookId, String newShelf) {
-    final book = findBook(bookId);
+  Future<void> moveBookToShelf(
+    String id,
+    String newShelf,
+  ) async {
+    final book = findBook(id);
 
     if (book == null) {
       return;
     }
 
-    final oldShelf = book["shelf"].toString();
-
-    if (oldShelf == newShelf) {
-      return;
-    }
-
     setState(() {
-      book["shelf"] = newShelf;
-
-      final newShelfBooks = books
-          .where((currentBook) => currentBook["shelf"] == newShelf)
-          .toList();
-
-      book["order"] = newShelfBooks.length - 1;
-
-      refreshShelfOrder(oldShelf);
-      refreshShelfOrder(newShelf);
-
+      book.shelf = newShelf;
       selectedShelf = newShelf;
       sortBy = "Custom";
     });
+
+    await saveBooks();
   }
 
-  void reorderBook(String draggedBookId, String targetBookId) {
-    if (draggedBookId == targetBookId) {
+  Future<void> reorderBook(
+    String draggedId,
+    String targetId,
+  ) async {
+    if (draggedId == targetId) {
       return;
     }
 
-    final displayedBooks = currentShelfBooks;
+    final shelfBooks = currentShelfBooks;
 
-    final draggedIndex = displayedBooks.indexWhere(
-      (book) => book["id"] == draggedBookId,
+    final draggedIndex = shelfBooks.indexWhere(
+      (book) => book.id == draggedId,
     );
 
-    final targetIndex = displayedBooks.indexWhere(
-      (book) => book["id"] == targetBookId,
+    final targetIndex = shelfBooks.indexWhere(
+      (book) => book.id == targetId,
     );
 
     if (draggedIndex == -1 || targetIndex == -1) {
@@ -195,32 +130,23 @@ class _ShelfViewState extends State<ShelfView> {
     }
 
     setState(() {
-      final draggedBook = displayedBooks.removeAt(draggedIndex);
-      displayedBooks.insert(targetIndex, draggedBook);
+      final draggedBook = shelfBooks.removeAt(draggedIndex);
 
-      for (int index = 0; index < displayedBooks.length; index++) {
-        displayedBooks[index]["order"] = index;
-      }
+      shelfBooks.insert(
+        targetIndex,
+        draggedBook,
+      );
+
+      books.removeWhere(
+        (book) => book.shelf == selectedShelf,
+      );
+
+      books.addAll(shelfBooks);
 
       sortBy = "Custom";
     });
-  }
 
-  void refreshShelfOrder(String shelf) {
-    final shelfBooks = books
-        .where((book) => book["shelf"] == shelf)
-        .toList();
-
-    shelfBooks.sort((firstBook, secondBook) {
-      final firstOrder = firstBook["order"] as int;
-      final secondOrder = secondBook["order"] as int;
-
-      return firstOrder.compareTo(secondOrder);
-    });
-
-    for (int index = 0; index < shelfBooks.length; index++) {
-      shelfBooks[index]["order"] = index;
-    }
+    await saveBooks();
   }
 
   Widget buildShelfButtons() {
@@ -231,16 +157,19 @@ class _ShelfViewState extends State<ShelfView> {
       children: shelves.map((shelf) {
         return DragTarget<String>(
           onWillAcceptWithDetails: (details) {
-            final draggedBook = findBook(details.data);
+            final book = findBook(details.data);
 
-            if (draggedBook == null) {
+            if (book == null) {
               return false;
             }
 
-            return draggedBook["shelf"] != shelf;
+            return book.shelf != shelf;
           },
           onAcceptWithDetails: (details) {
-            moveBookToShelf(details.data, shelf);
+            moveBookToShelf(
+              details.data,
+              shelf,
+            );
           },
           builder: (context, candidateData, rejectedData) {
             final isSelected = shelf == selectedShelf;
@@ -249,7 +178,9 @@ class _ShelfViewState extends State<ShelfView> {
             return ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: isHovering
-                    ? Theme.of(context).colorScheme.secondaryContainer
+                    ? Theme.of(context)
+                        .colorScheme
+                        .secondaryContainer
                     : null,
               ),
               onPressed: () {
@@ -300,7 +231,7 @@ class _ShelfViewState extends State<ShelfView> {
     );
   }
 
-  Widget buildDeleteArea() {
+    Widget buildDeleteArea() {
     return DragTarget<String>(
       onWillAcceptWithDetails: (details) {
         return findBook(details.data) != null;
@@ -344,9 +275,7 @@ class _ShelfViewState extends State<ShelfView> {
     );
   }
 
-  Widget buildBookCard(Map<String, dynamic> book) {
-    final bookId = book["id"].toString();
-
+  Widget buildBookCard(Book book) {
     return DragTarget<String>(
       onWillAcceptWithDetails: (details) {
         final draggedBook = findBook(details.data);
@@ -355,17 +284,20 @@ class _ShelfViewState extends State<ShelfView> {
           return false;
         }
 
-        return draggedBook["shelf"] == selectedShelf &&
-            details.data != bookId;
+        return draggedBook.shelf == selectedShelf &&
+            details.data != book.id;
       },
       onAcceptWithDetails: (details) {
-        reorderBook(details.data, bookId);
+        reorderBook(
+          details.data,
+          book.id,
+        );
       },
       builder: (context, candidateData, rejectedData) {
         final isHovering = candidateData.isNotEmpty;
 
         return Draggable<String>(
-          data: bookId,
+          data: book.id,
           feedback: Material(
             color: Colors.transparent,
             child: SizedBox(
@@ -386,7 +318,9 @@ class _ShelfViewState extends State<ShelfView> {
             decoration: BoxDecoration(
               border: isHovering
                   ? Border.all(
-                      color: Theme.of(context).colorScheme.primary,
+                      color: Theme.of(context)
+                          .colorScheme
+                          .primary,
                       width: 3,
                     )
                   : null,
@@ -400,9 +334,13 @@ class _ShelfViewState extends State<ShelfView> {
   }
 
   Widget buildBookVisual(
-    Map<String, dynamic> book, {
+    Book book, {
     bool isDragFeedback = false,
   }) {
+    final coverUrl = book.coverId != null
+        ? "https://covers.openlibrary.org/b/id/${book.coverId}-L.jpg"
+        : null;
+
     return Card(
       elevation: isDragFeedback ? 10 : 2,
       clipBehavior: Clip.antiAlias,
@@ -414,26 +352,36 @@ class _ShelfViewState extends State<ShelfView> {
             SizedBox(
               width: double.infinity,
               height: 195,
-              child: Image.network(
-                book["coverUrl"].toString(),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const ColoredBox(
-                    color: Colors.black12,
-                    child: Center(
-                      child: Icon(
-                        Icons.menu_book,
-                        size: 70,
+              child: coverUrl != null
+                  ? Image.network(
+                      coverUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const ColoredBox(
+                          color: Colors.black12,
+                          child: Center(
+                            child: Icon(
+                              Icons.menu_book,
+                              size: 70,
+                            ),
+                          ),
+                        );
+                      },
+                    )
+                  : const ColoredBox(
+                      color: Colors.black12,
+                      child: Center(
+                        child: Icon(
+                          Icons.menu_book,
+                          size: 70,
+                        ),
                       ),
                     ),
-                  );
-                },
-              ),
             ),
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 6, 8, 2),
               child: Text(
-                book["title"].toString(),
+                book.title,
                 textAlign: TextAlign.center,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -446,7 +394,7 @@ class _ShelfViewState extends State<ShelfView> {
             Padding(
               padding: const EdgeInsets.fromLTRB(8, 0, 8, 6),
               child: Text(
-                book["author"].toString(),
+                book.author,
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -463,6 +411,14 @@ class _ShelfViewState extends State<ShelfView> {
 
   @override
   Widget build(BuildContext context) {
+    if (isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     final displayedBooks = currentShelfBooks;
 
     return Scaffold(
@@ -475,24 +431,35 @@ class _ShelfViewState extends State<ShelfView> {
           children: [
             Text(
               selectedShelf,
-              style: Theme.of(context).textTheme.headlineMedium,
+              style: Theme.of(context)
+                  .textTheme
+                  .headlineMedium,
             ),
+
             const SizedBox(height: 12),
+
             buildShelfButtons(),
+
             const SizedBox(height: 12),
+
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisAlignment:
+                  MainAxisAlignment.center,
               children: [
                 const Text("Sort by: "),
                 const SizedBox(width: 8),
                 buildSortDropdown(),
               ],
             ),
+
             buildDeleteArea(),
+
             Expanded(
               child: displayedBooks.isEmpty
                   ? const Center(
-                      child: Text("No books on this shelf yet."),
+                      child: Text(
+                        "No books on this shelf yet.",
+                      ),
                     )
                   : GridView.builder(
                       itemCount: displayedBooks.length,
@@ -510,6 +477,7 @@ class _ShelfViewState extends State<ShelfView> {
                       },
                     ),
             ),
+
             TextButton(
               onPressed: () {
                 Navigator.pop(context);

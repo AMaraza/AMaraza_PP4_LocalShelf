@@ -4,7 +4,7 @@ class Book {
   final String author;
   final int? coverId;
   final DateTime dateAdded;
-  final String shelf;
+  String shelf;
 
   Book({
     required this.id,
