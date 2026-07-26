@@ -16,10 +16,7 @@ class BrowseBooksView extends StatefulWidget {
 class _BrowseBooksViewState extends State<BrowseBooksView> {
   final TextEditingController searchController = TextEditingController();
 
-  String? title;
-  String? author;
-  String? coverUrl;
-  int? coverId;
+  List<Map<String, dynamic>> searchResults = [];
 
   String selectedShelf = "WishList";
 
@@ -43,53 +40,47 @@ class _BrowseBooksViewState extends State<BrowseBooksView> {
       isLoading = true;
       searched = true;
       bookFound = false;
-
-      title = null;
-      author = null;
-      coverUrl = null;
-      coverId = null;
     });
 
     try {
       final response = await http.get(
         Uri.parse(
-          "https://openlibrary.org/search.json?title=${Uri.encodeComponent(searchText)}&limit=1",
+          "https://openlibrary.org/search.json?title=${Uri.encodeComponent(searchText)}&limit=4",
         ),
       );
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
 
-        if (data["docs"] != null && data["docs"].isNotEmpty) {
-          final book = data["docs"][0];
+        setState(() {
+          searchResults.clear();
 
-          setState(() {
-            title = book["title"] ?? "Unknown Title";
-
-            author = book["author_name"] != null
-                ? book["author_name"][0]
-                : "Unknown Author";
-
-            if (book["cover_i"] != null) {
-              coverId = book["cover_i"];
-              coverUrl =
-                  "https://covers.openlibrary.org/b/id/$coverId-M.jpg";
+          if (data["docs"] != null) {
+            for (final book in data["docs"].take(4)) {
+              searchResults.add({
+                "title": book["title"] ?? "Unknown Title",
+                "author": book["author_name"] != null
+                    ? book["author_name"][0]
+                    : "Unknown Author",
+                "coverId": book["cover_i"],
+              });
             }
-
-            bookFound = true;
-          });
+          }
+        });
         }
       }
-    } catch (_) {
-      bookFound = false;
-    }
+      catch (_) {
+        setState(() {
+          searchResults.clear();
+        });
+      }
 
     setState(() {
       isLoading = false;
     });
   }
 
-  Future<void> saveBook() async {
+  /*Future<void> saveBook() async {
     if (!bookFound) return;
 
     setState(() {
@@ -118,100 +109,124 @@ class _BrowseBooksViewState extends State<BrowseBooksView> {
         content: Text("Book saved successfully!"),
       ),
     );
+  }*/
+
+Widget buildBookDisplay() {
+  if (!searched) {
+    return const SizedBox();
   }
 
-  Widget buildBookDisplay() {
-    if (!searched) {
-      return const SizedBox();
-    }
+  if (isLoading) {
+    return const CircularProgressIndicator();
+  }
 
-    if (isLoading) {
-      return const CircularProgressIndicator();
-    }
-
-    if (!bookFound) {
-      return const Column(
-        children: [
-          Icon(Icons.menu_book, size: 120),
-          SizedBox(height: 10),
-          Text(
-            "Book Not Found",
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          Text(
-            "No matching book was found.",
-          ),
-        ],
-      );
-    }
-
-    return Column(
+  if (searchResults.isEmpty) {
+    return const Column(
       children: [
-        coverUrl != null
-            ? Image.network(
-                coverUrl!,
-                height: 180,
-                errorBuilder: (_, __, ___) =>
-                    const Icon(Icons.menu_book, size: 120),
-              )
-            : const Icon(Icons.menu_book, size: 120),
-
-        const SizedBox(height: 12),
-
+        Icon(Icons.menu_book, size: 120),
+        SizedBox(height: 10),
         Text(
-          title!,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
+          "No Books Found",
+          style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-          ),
-        ),
-
-        Text(
-          author!,
-          style: const TextStyle(fontSize: 18),
-        ),
-
-        const SizedBox(height: 16),
-
-        DropdownButton<String>(
-          value: selectedShelf,
-          items: const [
-            DropdownMenuItem(
-              value: "WishList",
-              child: Text("WishList"),
-            ),
-            DropdownMenuItem(
-              value: "To Be Read",
-              child: Text("To Be Read"),
-            ),
-            DropdownMenuItem(
-              value: "Finished",
-              child: Text("Finished"),
-            ),
-          ],
-          onChanged: (value) {
-            setState(() {
-              selectedShelf = value!;
-            });
-          },
-        ),
-
-        const SizedBox(height: 15),
-
-        ElevatedButton.icon(
-          onPressed: isSaving ? null : saveBook,
-          icon: const Icon(Icons.save),
-          label: Text(
-            isSaving ? "Saving..." : "Save Book",
           ),
         ),
       ],
     );
   }
+
+  return ListView.builder(
+    shrinkWrap: true,
+    physics: const NeverScrollableScrollPhysics(),
+    itemCount: searchResults.length,
+    itemBuilder: (context, index) {
+      final book = searchResults[index];
+
+      final coverUrl = book["coverId"] != null
+          ? "https://covers.openlibrary.org/b/id/${book["coverId"]}-M.jpg"
+          : null;
+
+      return Card(
+        margin: const EdgeInsets.only(bottom: 16),
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              coverUrl != null
+                  ? Image.network(
+                      coverUrl,
+                      width: 80,
+                      height: 120,
+                      fit: BoxFit.cover,
+                    )
+                  : const SizedBox(
+                      width: 80,
+                      height: 120,
+                      child: Icon(Icons.menu_book),
+                    ),
+
+              const SizedBox(width: 16),
+
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      book["title"],
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    Text(book["author"]),
+
+                    const SizedBox(height: 12),
+
+                    DropdownButton<String>(
+                      value: selectedShelf,
+                      items: const [
+                        DropdownMenuItem(
+                          value: "WishList",
+                          child: Text("WishList"),
+                        ),
+                        DropdownMenuItem(
+                          value: "To Be Read",
+                          child: Text("To Be Read"),
+                        ),
+                        DropdownMenuItem(
+                          value: "Finished",
+                          child: Text("Finished"),
+                        ),
+                      ],
+                      onChanged: (value) {
+                        setState(() {
+                          selectedShelf = value!;
+                        });
+                      },
+                    ),
+
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        // We'll hook this back up to save later
+                      },
+                      icon: const Icon(Icons.save),
+                      label: const Text("Save"),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+}
 
   @override
   Widget build(BuildContext context) {
