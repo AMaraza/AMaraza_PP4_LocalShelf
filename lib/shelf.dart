@@ -22,6 +22,7 @@ class _ShelfViewState extends State<ShelfView> {
 
   List<Book> books = [];
   bool isLoading = true;
+  bool draggingBook = false;
 
   @override
   void initState() {
@@ -299,16 +300,22 @@ class _ShelfViewState extends State<ShelfView> {
         return Draggable<String>(
           data: book.id,
           feedback: Material(
-            color: Colors.transparent,
-            child: SizedBox(
-              width: 150,
-              height: 270,
-              child: buildBookVisual(
-                book,
-                isDragFeedback: true,
+          color: Colors.transparent,
+          child: Opacity(
+            opacity: 0.75,
+            child: Transform.scale(
+              scale: 0.80,
+              child: SizedBox(
+                width: 150,
+                height: 270,
+                child: buildBookVisual(
+                  book,
+                  isDragFeedback: true,
+                ),
               ),
             ),
           ),
+        ),
           childWhenDragging: Opacity(
             opacity: 0.25,
             child: buildBookVisual(book),
@@ -452,7 +459,12 @@ class _ShelfViewState extends State<ShelfView> {
               ],
             ),
 
-            buildDeleteArea(),
+            AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            child: draggingBook
+                ? buildDeleteArea()
+                : const SizedBox.shrink(),
+            ),
 
             Expanded(
               child: displayedBooks.isEmpty
@@ -476,13 +488,6 @@ class _ShelfViewState extends State<ShelfView> {
                         );
                       },
                     ),
-            ),
-
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text("Return"),
             ),
           ],
         ),
