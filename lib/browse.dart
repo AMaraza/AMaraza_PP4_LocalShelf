@@ -261,11 +261,6 @@ Widget buildBookDisplay() {
                 buildBookDisplay(),
 
                 const SizedBox(height: 24),
-
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text("Return"),
-                ),
               ],
             ),
           ),
